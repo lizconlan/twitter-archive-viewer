@@ -29,3 +29,7 @@ Optional import controls:
 - `styles.css`: shared viewer styling
 - `build_viewer_data.py`: builds browser-ready viewer data from supplied archive sources
 - `import_archive_subset.py`: builds browser-ready viewer data from a curated subset selection
+
+## License
+
+This code is available under the [MIT License](LICENSE)
