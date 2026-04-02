@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tweet Archive Viewer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-mode="archive">
+  <main class="page-shell gmail-shell">
+    <header class="panel app-toolbar">
+      <div class="toolbar-main">
+        <div class="toolbar-brand">
+          <span class="rail-mark">t</span>
+          <div>
+            <span class="eyebrow">Local Archive</span>
+            <h1>Tweet Archive</h1>
+          </div>
+        </div>
+        <div class="toolbar-search">
+          <label for="tweet-filter" class="eyebrow">Search archive</label>
+          <input id="tweet-filter" class="filter-input toolbar-search-input" type="search" placeholder="Search tweets, people, ids">
+        </div>
+      </div>
+    </header>
+
+    <section class="archive-layout">
+      <aside class="panel rail-panel">
+        <div class="rail-section rail-section--nav">
+          <span class="eyebrow">Views</span>
+          <div id="filter-chips" class="filter-chips"></div>
+        </div>
+        <div class="rail-section">
+          <span class="eyebrow">Archive stats</span>
+          <div id="archive-summary" class="archive-summary"></div>
+        </div>
+        <div class="filter-grid">
+          <div>
+            <label for="account-filter" class="eyebrow">Account</label>
+            <div class="combo-filter">
+              <input
+                id="account-filter"
+                class="filter-input"
+                type="text"
+                placeholder="All accounts"
+                autocomplete="off"
+                spellcheck="false"
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-controls="account-filter-options"
+              >
+              <div id="account-filter-options" class="combo-filter-menu" role="listbox"></div>
+            </div>
+          </div>
+          <div>
+            <label for="date-from" class="eyebrow">From</label>
+            <input id="date-from" class="filter-input" type="date">
+          </div>
+          <div>
+            <label for="date-to" class="eyebrow">To</label>
+            <input id="date-to" class="filter-input" type="date">
+          </div>
+          <div class="filter-actions">
+            <button id="clear-filters" class="clear-button" type="button">Clear filters</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel timeline-panel">
+        <header class="timeline-header">
+          <div>
+            <span class="eyebrow">Messages</span>
+            <h2>Archive Inbox</h2>
+          </div>
+          <div class="timeline-header-actions">
+            <div id="results-meta" class="results-meta"></div>
+            <div id="pagination-controls" class="pagination-controls"></div>
+          </div>
+        </header>
+        <div class="timeline-scroll-surface">
+          <div id="tweet-list" class="tweet-timeline"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="image-lightbox" class="image-lightbox" hidden aria-hidden="true">
+    <div class="image-lightbox-backdrop" data-lightbox-close="true"></div>
+    <div class="image-lightbox-window" role="dialog" aria-modal="true" aria-label="Full size tweet image">
+      <img id="image-lightbox-preview" class="image-lightbox-preview" alt="">
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

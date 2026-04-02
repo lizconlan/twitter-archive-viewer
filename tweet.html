@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tweet Viewer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-mode="single">
+  <main class="page-shell single-layout">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">Single Tweet</span>
+        <h1>Tweet Preview</h1>
+        <p>This page still supports direct links to a single tweet via <code>?tweet_id=&lt;id&gt;</code>.</p>
+      </div>
+      <div class="status-pill" data-role="status">Loading tweet...</div>
+    </header>
+
+    <section class="panel detail-panel">
+      <div id="tweet-detail"></div>
+    </section>
+  </main>
+
+  <div id="image-lightbox" class="image-lightbox" hidden aria-hidden="true">
+    <div class="image-lightbox-backdrop" data-lightbox-close="true"></div>
+    <div class="image-lightbox-window" role="dialog" aria-modal="true" aria-label="Full size tweet image">
+      <img id="image-lightbox-preview" class="image-lightbox-preview" alt="">
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

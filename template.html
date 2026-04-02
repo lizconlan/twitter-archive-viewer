@@ -1,0 +1,28 @@
+<div class="tweet">
+  <div class="permalink-header">
+    <a class="account-group js-account-group js-action-profile js-user-profile-link js-nav" href="https://twitter.com/{{ author.username }}" data-user-id="{{ author.id }}">
+      <img class="avatar js-action-profile-avatar" src="downloads/{{ author.profile_image_s3 }}" alt="">
+      <span class="FullNameGroup">
+        <strong class="fullname show-popup-with-id u-textTruncate " data-aria-label-part="">
+          {{ author.display_name }}
+        </strong>
+        <span class="username u-dir u-textTruncate" dir="ltr" data-aria-label-part="">
+          @<b>{{ author.username }}</b>
+        </span>
+      </span>
+    </a>
+  </div>
+  <div class="js-tweet-text-container">
+    <p class="TweetTextSize TweetTextSize--jumbo js-tweet-text tweet-text" lang="en" data-aria-label-part="0">
+      {{ text }}
+    </p>
+  </div>
+  <div class="js-tweet-image-container">
+    {{#media}}<img width="580" src="downloads/{{s3_url}}" alt="{{alt_text}}">{{/media}}
+  </div>
+  <div class="client-and-actions">
+    <span class="metadata">
+      <span>{{ timestamp }}</span>
+    </span>
+  </div>
+</div>
