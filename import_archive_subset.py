@@ -10,12 +10,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from build_viewer_data import (
-    MANAGED_LIKED_MEDIA_DIR,
-    MANAGED_PROFILE_IMAGES_DIR,
-    MANAGED_RAW_DATA_DIR,
-    build_manifest,
+    DOWNLOADS_DIR,
+    LIKED_MEDIA_DIR,
+    PROFILE_IMAGES_DIR,
     is_hydrated_tweet,
     media_filename_from_url,
+    write_viewer_output,
 )
 
 
@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument(
         "--append",
         action="store_true",
-        help="Add to the managed subset instead of replacing it",
+        help="Add to the current viewer output instead of replacing it",
     )
     parser.add_argument("--seed", type=int, default=7, help="Random seed for --strategy random")
     return parser.parse_args()
@@ -240,38 +240,60 @@ def choose_subset(tweets, strategy, limit, seed):
     return ordered[:limit]
 
 
-def clear_managed_subset():
-    for directory in (MANAGED_RAW_DATA_DIR, MANAGED_LIKED_MEDIA_DIR, MANAGED_PROFILE_IMAGES_DIR):
-        if directory.exists():
-            shutil.rmtree(directory)
+def clear_viewer_output():
+    if DOWNLOADS_DIR.exists():
+        for path in DOWNLOADS_DIR.iterdir():
+            if path.name == ".keep":
+                continue
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
 
 
-def copy_subset(selection):
-    MANAGED_RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    MANAGED_LIKED_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-    MANAGED_PROFILE_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+def copy_subset_assets(selection):
+    LIKED_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    PROFILE_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
     copied_media = 0
     copied_profiles = 0
 
     for item in selection:
-        destination = MANAGED_RAW_DATA_DIR / item["path"].name
-        shutil.copyfile(item["path"], destination)
-
         for media_path in item["media_files"].values():
-            target = MANAGED_LIKED_MEDIA_DIR / media_path.name
+            target = LIKED_MEDIA_DIR / media_path.name
             if not target.exists():
                 shutil.copyfile(media_path, target)
                 copied_media += 1
 
         profile_image = item["profile_image"]
         if profile_image:
-            target = MANAGED_PROFILE_IMAGES_DIR / profile_image.name
+            target = PROFILE_IMAGES_DIR / profile_image.name
             if not target.exists():
                 shutil.copyfile(profile_image, target)
                 copied_profiles += 1
 
     return copied_media, copied_profiles
+
+
+def build_selection(selection, append=False):
+    tweets = {}
+
+    if append:
+        for path in DOWNLOADS_DIR.glob("*.json"):
+            try:
+                payload = json.loads(path.read_text())
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                continue
+
+            if not is_hydrated_tweet(payload):
+                continue
+
+            tweets[str(payload["id"])] = {"path": path, "tweet": payload}
+
+    for item in selection:
+        tweets[str(item["tweet"]["id"])] = {"path": item["path"], "tweet": item["tweet"]}
+
+    return write_viewer_output(tweets)
 
 
 def main():
@@ -302,13 +324,13 @@ def main():
         selection = choose_subset(tweets, args.strategy, args.limit, args.seed)
 
     if not args.append:
-        clear_managed_subset()
+        clear_viewer_output()
 
-    copied_media, copied_profiles = copy_subset(selection)
-    build_manifest()
+    copied_media, copied_profiles = copy_subset_assets(selection)
+    build_selection(selection, append=args.append)
 
     print(
-        f"Imported {len(selection)} tweets into managed viewer data "
+        f"Imported {len(selection)} tweets into viewer data "
         f"({copied_media} media files, {copied_profiles} profile images)."
     )
 

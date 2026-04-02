@@ -24,7 +24,6 @@ const ArchiveViewer = (() => {
     { id: "all", label: "All", predicate: () => true },
     { id: "media", label: "Media", predicate: (tweet) => (tweet.media_count || 0) > 0 },
     { id: "video", label: "Video", predicate: (tweet) => Boolean(tweet.has_video) },
-    { id: "managed", label: "Imported", predicate: (tweet) => tweet.source_kind === "managed" },
   ];
 
   function escapeHtml(value) {
@@ -630,7 +629,6 @@ const ArchiveViewer = (() => {
     const total = state.manifest.length;
     const withMedia = state.manifest.filter((tweet) => (tweet.media_count || 0) > 0).length;
     const withVideo = state.manifest.filter((tweet) => tweet.has_video).length;
-    const imported = state.manifest.filter((tweet) => tweet.source_kind === "managed").length;
     const avatarCandidates = activeAccountProfile ? sourceCandidates(activeAccountProfile, "avatar") : [];
     const avatarSrc = avatarCandidates[0];
     const accountSummary = activeAccountProfile ? `
@@ -662,10 +660,6 @@ const ArchiveViewer = (() => {
       <div class="summary-card">
         <span class="summary-value">${withVideo}</span>
         <span class="summary-label">Video</span>
-      </div>
-      <div class="summary-card">
-        <span class="summary-value">${imported}</span>
-        <span class="summary-label">Imported</span>
       </div>
     `;
 
@@ -970,9 +964,6 @@ const ArchiveViewer = (() => {
     const tweetUrl = tweet.direct_link || profileUrl;
     const badges = [];
 
-    if (tweet.source_kind === "managed") {
-      badges.push('<span class="tweet-list-badge">Imported</span>');
-    }
     if (isLikelyIncompleteText(tweet.text || "")) {
       badges.push('<span class="tweet-list-badge tweet-list-badge--warning">Possibly truncated</span>');
     }

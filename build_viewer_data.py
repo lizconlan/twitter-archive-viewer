@@ -11,10 +11,6 @@ DOWNLOADS_DIR = ROOT / "downloads"
 MANIFEST_PATH = DOWNLOADS_DIR / "index.json"
 LIKED_MEDIA_DIR = DOWNLOADS_DIR / "liked_media"
 PROFILE_IMAGES_DIR = DOWNLOADS_DIR / "profile_images"
-MANAGED_DIR = DOWNLOADS_DIR / "managed"
-MANAGED_RAW_DATA_DIR = MANAGED_DIR / "raw_data"
-MANAGED_LIKED_MEDIA_DIR = MANAGED_DIR / "liked_media"
-MANAGED_PROFILE_IMAGES_DIR = MANAGED_DIR / "profile_images"
 THREAD_OVERRIDES_PATH = ROOT / "thread_overrides.json"
 
 IGNORED_DIRS = {
@@ -57,10 +53,6 @@ def summarize_tweet(tweet, source_path):
     media = tweet.get("media") or []
     author = tweet.get("author") or {}
     text = " ".join(str(tweet.get("text", "")).split())
-    source_kind = tweet.get("_viewer_source_kind")
-    if not source_kind:
-        source_kind = "managed" if MANAGED_DIR in source_path.parents else "cache"
-
     return {
         "id": str(tweet["id"]),
         "text": tweet.get("text", ""),
@@ -95,7 +87,6 @@ def summarize_tweet(tweet, source_path):
         "media_count": len(media),
         "has_video": any(item.get("type") == "video" for item in media),
         "json_path": f"downloads/{tweet['id']}.json",
-        "source_kind": source_kind,
     }
 
 
@@ -115,7 +106,6 @@ def infer_profile_image_s3(author):
 
     for directory, prefix in (
         (PROFILE_IMAGES_DIR, "profile_images"),
-        (MANAGED_PROFILE_IMAGES_DIR, "managed/profile_images"),
     ):
         existing = sorted(directory.glob(f"{author_id}-*"))
         if existing:
@@ -125,7 +115,7 @@ def infer_profile_image_s3(author):
     if not filename:
         return ""
 
-    return f"managed/profile_images/{author_id}-{filename}"
+    return f"profile_images/{author_id}-{filename}"
 
 
 def infer_media_s3_url(tweet_id, media_item):
@@ -135,7 +125,6 @@ def infer_media_s3_url(tweet_id, media_item):
 
     for directory, prefix in (
         (LIKED_MEDIA_DIR, "liked_media"),
-        (MANAGED_LIKED_MEDIA_DIR, "managed/liked_media"),
     ):
         if filename:
             exact = directory / f"{tweet_id}-{filename}"
@@ -152,7 +141,7 @@ def infer_media_s3_url(tweet_id, media_item):
                 return f"{prefix}/{key_match[0].name}"
 
     if filename:
-        return f"managed/liked_media/{tweet_id}-{filename}"
+        return f"liked_media/{tweet_id}-{filename}"
 
     return ""
 
@@ -268,19 +257,12 @@ def normalize_source_roots(source_roots=None):
         seen.add(tweet_root)
         normalized.append(tweet_root)
 
-    if MANAGED_RAW_DATA_DIR.exists() and MANAGED_RAW_DATA_DIR not in seen:
-        normalized.append(MANAGED_RAW_DATA_DIR)
-
     return normalized
 
 
 def iter_tweet_json_paths(source_roots):
     for root in source_roots:
         for path in root.rglob("*.json"):
-            if root == MANAGED_RAW_DATA_DIR:
-                yield path
-                continue
-
             if any(part in IGNORED_DIRS for part in path.parts):
                 continue
 
@@ -309,24 +291,25 @@ def discover_hydrated_tweets(source_roots=None):
     return chosen
 
 
-def build_manifest(source_roots=None):
+def write_viewer_output(tweets):
     DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
-    tweets = discover_hydrated_tweets(source_roots)
     thread_overrides = load_thread_overrides()
     manifest = []
 
     for tweet_id, item in tweets.items():
         destination = DOWNLOADS_DIR / f"{tweet_id}.json"
         normalized_tweet = normalize_tweet(item["tweet"], thread_overrides)
-        normalized_tweet["_viewer_source_kind"] = "managed" if MANAGED_DIR in item["path"].parents else "cache"
         destination.write_text(json.dumps(normalized_tweet, indent=2))
-
         manifest.append(summarize_tweet(normalized_tweet, item["path"]))
 
     manifest.sort(key=lambda tweet: (tweet["timestamp"], tweet["id"]), reverse=True)
     MANIFEST_PATH.write_text(json.dumps({"tweets": manifest}, indent=2))
+    return manifest
 
+
+def build_manifest(source_roots=None):
+    tweets = discover_hydrated_tweets(source_roots)
+    manifest = write_viewer_output(tweets)
     print(f"Prepared {len(manifest)} tweets for the viewer")
 
 

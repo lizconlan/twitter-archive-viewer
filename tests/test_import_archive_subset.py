@@ -83,17 +83,16 @@ class ImportArchiveSubsetTests(unittest.TestCase):
         self.assertEqual([item["tweet"]["id"] for item in oldest], ["1", "3", "2"])
         self.assertEqual([item["tweet"]["id"] for item in random_one], [item["tweet"]["id"] for item in random_two])
 
-    def test_copy_subset_copies_raw_media_and_profile_files(self):
+    def test_copy_subset_assets_copies_media_and_profile_files(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             source = root / "source"
-            managed = root / "managed"
+            downloads = root / "downloads"
             source.mkdir()
-            managed.mkdir()
+            downloads.mkdir()
 
-            raw_data_dir = managed / "raw_data"
-            liked_media_dir = managed / "liked_media"
-            profile_images_dir = managed / "profile_images"
+            liked_media_dir = downloads / "liked_media"
+            profile_images_dir = downloads / "profile_images"
 
             tweet_path = source / "123.json"
             media_path = source / "123-photo.jpg"
@@ -113,17 +112,48 @@ class ImportArchiveSubsetTests(unittest.TestCase):
             ]
 
             with (
-                mock.patch.object(import_archive_subset, "MANAGED_RAW_DATA_DIR", raw_data_dir),
-                mock.patch.object(import_archive_subset, "MANAGED_LIKED_MEDIA_DIR", liked_media_dir),
-                mock.patch.object(import_archive_subset, "MANAGED_PROFILE_IMAGES_DIR", profile_images_dir),
+                mock.patch.object(import_archive_subset, "LIKED_MEDIA_DIR", liked_media_dir),
+                mock.patch.object(import_archive_subset, "PROFILE_IMAGES_DIR", profile_images_dir),
             ):
-                copied_media, copied_profiles = import_archive_subset.copy_subset(selection)
+                copied_media, copied_profiles = import_archive_subset.copy_subset_assets(selection)
 
             self.assertEqual(copied_media, 1)
             self.assertEqual(copied_profiles, 1)
-            self.assertTrue((raw_data_dir / "123.json").exists())
             self.assertTrue((liked_media_dir / "123-photo.jpg").exists())
             self.assertTrue((profile_images_dir / "42-avatar.jpg").exists())
+
+    def test_build_selection_appends_existing_viewer_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            downloads = root / "downloads"
+            downloads.mkdir()
+
+            existing = downloads / "111.json"
+            existing.write_text(json.dumps(hydrated_tweet("111", timestamp="2024-01-01T00:00:00.000Z")))
+
+            selection = [
+                {
+                    "path": root / "source-222.json",
+                    "tweet": hydrated_tweet("222", timestamp="2024-01-02T00:00:00.000Z"),
+                    "timestamp": "2024-01-02T00:00:00.000Z",
+                    "media_files": {},
+                    "profile_image": None,
+                }
+            ]
+
+            captured = {}
+
+            def fake_write_viewer_output(tweets):
+                captured.update(tweets)
+                return []
+
+            with (
+                mock.patch.object(import_archive_subset, "DOWNLOADS_DIR", downloads),
+                mock.patch.object(import_archive_subset, "write_viewer_output", fake_write_viewer_output),
+            ):
+                import_archive_subset.build_selection(selection, append=True)
+
+            self.assertEqual(sorted(captured.keys()), ["111", "222"])
 
 
 if __name__ == "__main__":
