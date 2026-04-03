@@ -217,6 +217,12 @@ Default bias:
 - Polish visual design and responsiveness
 - Compare behaviour against the reference implementation
 
+### Future ideas (speculative)
+- Tool to batch convert tweets to match the full Twitter v1.1 spec
+- Tool to minify tweet files to save space
+- Create import sets to use for demo / backup purposes
+- Editing tools to hide/remove unwanted tweets from the viewer
+
 ## Source of truth
 
 For now:
