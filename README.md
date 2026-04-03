@@ -30,6 +30,10 @@ Optional import controls:
 - `build_viewer_data.py`: builds browser-ready viewer data from supplied archive sources
 - `import_archive_subset.py`: builds browser-ready viewer data from a curated subset selection
 
+## Previous implementation
+
+![Previous implementation screenshot showing Google Reader-inspired layout: left sidebar with view filters and archive stats, main content area  (scrollable) displaying tweets in inbox format with pagination](reference_screenshot.png)
+
 ## License
 
 This code is available under the [MIT License](LICENSE)
